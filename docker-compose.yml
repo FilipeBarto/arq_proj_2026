@@ -34,6 +34,16 @@ services:
       DB_PASSWORD: changeme_local_dev
     ports:
       - "8090:8080"
+    # Usado por `docker compose watch`: ao salvar um arquivo em src/ ou o
+    # pom.xml, o Compose reconstrói a imagem e recria o container sozinho,
+    # aproveitando o cache de camadas (as dependências já baixadas não são
+    # rebaixadas). Evita o ciclo manual de `down` + `up --build`.
+    develop:
+      watch:
+        - action: rebuild
+          path: ./src
+        - action: rebuild
+          path: ./pom.xml
 
 volumes:
   trokr-db-data:

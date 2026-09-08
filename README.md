@@ -31,6 +31,11 @@ que oferecem e propõem trocas entre si, sem dinheiro envolvido.
   `@AllArgsConstructor`). Não é foco da disciplina — se preferir, pode remover
   a dependência e escrever os métodos manualmente sem mudar nada da
   arquitetura.
+- **Spring Boot DevTools** (opcional, escopo `runtime`): reinicia a aplicação
+  sozinho quando as classes são recompiladas, agilizando o ciclo de
+  desenvolvimento (ver ["Ciclo de desenvolvimento"](#ciclo-de-desenvolvimento)).
+  Com `optional=true` no `pom.xml`, não entra no `.jar` final gerado pelo
+  Docker, então não tem efeito em produção.
 - **PostgreSQL** via Docker Compose
 
 ## Como subir o ambiente
@@ -61,14 +66,51 @@ Para derrubar o ambiente **e apagar os dados do banco**:
 docker compose down -v
 ```
 
-### Rodando sem Docker (opcional)
+## Ciclo de desenvolvimento
 
-Se preferir rodar a aplicação localmente e só o banco no Docker:
+Como o código Java é compilado dentro do container, uma mudança no fonte só
+aparece depois que a imagem é reconstruída. Para não ter que ficar rodando
+`docker compose down` + `docker compose up --build` a cada alteração, use uma
+das opções abaixo.
+
+### Opção A — `docker compose watch` (recomendada, sem instalar Java)
+
+```bash
+docker compose watch
+```
+
+Não precisa rodar `docker compose up` antes: o `watch` já sobe `db` + `app` e
+só então começa a observar `src/` e o `pom.xml` (bloco `develop.watch` no
+`docker-compose.yml`). Ao salvar um arquivo, ele reconstrói a imagem do `app`
+e recria o container automaticamente. O cache de camadas do Docker é
+aproveitado — as dependências Maven já baixadas **não** são rebaixadas, então
+sobra basicamente o `mvn package` (alguns segundos a algumas dezenas de
+segundos). Requer Docker Compose 2.22 ou mais novo.
+
+É só salvar o arquivo e esperar o container voltar.
+
+> **Opcional — `docker compose up --watch`.** Faz o mesmo rebuild automático,
+> mas com o comportamento do `up` de sempre: mostra os logs de **todos** os
+> serviços (`db` e `app`, não só o `app`) e o `Ctrl+C` **derruba** os
+> containers. Já o `docker compose watch` "cru" mostra só os logs dos serviços
+> observados e, ao sair com `Ctrl+C`, **deixa os containers rodando** — nesse
+> caso é preciso `docker compose down` depois. Use o que preferir; o resultado
+> do hot reload é idêntico.
+
+### Opção B — rodar a aplicação localmente com DevTools (mais rápido)
+
+Se você tem Java 21 instalado (ou usa a IDE para rodar), suba só o banco no
+Docker e a aplicação na máquina:
 
 ```bash
 docker compose up db -d
 ./mvnw spring-boot:run
 ```
+
+Com o **Spring Boot DevTools** no classpath, a aplicação reinicia sozinha
+(1–2s) sempre que as classes são recompiladas — o `mvnw spring-boot:run`
+recompila ao detectar mudança, e no IntelliJ basta acionar "Build Project"
+(Ctrl+F9 / Cmd+F9).
 
 Nesse caso, as variáveis de ambiente de conexão com o banco (`DB_HOST`,
 `DB_PORT`, `DB_NAME`, `DB_USER`, `DB_PASSWORD`) já têm valores padrão em

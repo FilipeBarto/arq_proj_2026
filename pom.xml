@@ -57,6 +57,18 @@
 			<artifactId>lombok</artifactId>
 			<optional>true</optional>
 		</dependency>
+		<!--
+			DevTools: reinicia a aplicação automaticamente quando as classes
+			são recompiladas (ex.: rodando `./mvnw spring-boot:run` localmente
+			ou pelo "Build" da IDE). Com `optional=true` ele não entra no .jar
+			final gerado pelo Dockerfile multi-stage, então não afeta produção.
+		-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-devtools</artifactId>
+			<scope>runtime</scope>
+			<optional>true</optional>
+		</dependency>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-actuator-test</artifactId>
